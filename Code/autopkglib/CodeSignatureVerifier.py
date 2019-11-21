@@ -163,6 +163,7 @@ class CodeSignatureVerifier(DmgMounter):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            text=True,
         )
         (output, error) = proc.communicate()
 
@@ -185,7 +186,9 @@ class CodeSignatureVerifier(DmgMounter):
         """
         process = ["/usr/sbin/pkgutil", "--check-signature", path]
 
-        proc = subprocess.Popen(process, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(
+            process, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
         (output, error) = proc.communicate()
 
         # Log everything
@@ -198,7 +201,7 @@ class CodeSignatureVerifier(DmgMounter):
 
         # Parse the output for certificate authority names
         authority_name_chain = []
-        for match in re.finditer(RE_AUTHORITY_PKGUTIL, output.decode("utf-8")):
+        for match in re.finditer(RE_AUTHORITY_PKGUTIL, output):
             authority_name_chain.append(match.group("authority"))
 
         # Return a tuple with boolean status and
@@ -278,7 +281,7 @@ class CodeSignatureVerifier(DmgMounter):
 
     def main(self):
         if self.env.get("DISABLE_CODE_SIGNATURE_VERIFICATION"):
-            self.output("Code signature verification disabled for this recipe " "run.")
+            self.output("Code signature verification disabled for this recipe run.")
             return
         # Check if we're trying to read something inside a dmg.
         input_path = self.env["input_path"]
